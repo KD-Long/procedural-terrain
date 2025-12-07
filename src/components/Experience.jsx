@@ -1,29 +1,62 @@
 import React, { useRef } from 'react'
 import { extend, useFrame } from '@react-three/fiber';
 import { Perf } from 'r3f-perf'
-
-import { shaderMaterial, useTexture, OrbitControls, Environment, Icosahedron } from '@react-three/drei';
-
 import { useControls } from 'leva'
+import { Geometry, Base, Addition, Subtraction, ReverseSubtraction, Intersection, Difference } from '@react-three/csg'
+import { shaderMaterial, useTexture, OrbitControls, Environment, Icosahedron, GizmoHelper, GizmoViewport } from '@react-three/drei';
 import * as THREE from 'three'
 
-import vertexShader from '../shaders/earth/vertex.glsl'
-import fragmentShader from '../shaders/earth/fragment.glsl'
+import { SphereGeometry } from 'three/src/Three.Core.js';
+import Board from './Board';
+import Terrain from './Terrain';
 
 const Experience = () => {
 
     const sphereRef = useRef()
 
-    const MyShaderMaterial = shaderMaterial({
-        uTime: 0,
-    },
-        vertexShader,
-        fragmentShader
-    )
-    //this exent allows it to be used a a component below
-    // Note: When using "extend" which register custom components with the JSX reconciler, 
-    // use lowercase names for those components, regardless of how they are initially defined.
-    extend({ MyShaderMaterial: MyShaderMaterial })
+
+    let {
+        uPositionFrequency,
+        uStrength,
+        uWarpFrequency,
+        uWarpStrength,
+        colorWaterDeep,
+        colorWaterSurface,
+        colorSand,
+        colorGrass,
+        colorSnow,
+        colorRock
+    } = useControls({
+        // bgColor: { value: '#1d1f2a', label: 'Background Color' },
+        uPositionFrequency: { value: 0.2, min: 0, max: 1.0, step: 0.001 },
+        uStrength: { value: 2.0, min: 0.0, max: 10.0, step: 0.001 },
+        uWarpFrequency: { value: 5.0, min: 0.0, max: 10.0, step: 0.001 },
+        uWarpStrength: { value: 0.5, min: 0.0, max: 1.0, step: 0.001 },
+
+        colorWaterDeep: { value: '#002b3d' },
+        colorWaterSurface: { value: '#66a8ff' },
+        colorSand: { value: '#ffe894' },
+        colorGrass: { value: '#85d534' },
+        colorSnow: { value: '#ffffff' },
+        colorRock: { value: '#bfbd8d' },
+
+
+    });
+
+
+    // const MyShaderMaterial = shaderMaterial({
+    //     uTime: 0,
+    // },
+    //     vertexShader,
+    //     fragmentShader
+    // )
+    // //this exent allows it to be used as a component below
+    // // Note: When using "extend" which register custom components with the JSX reconciler, 
+    // // use lowercase names for those components, regardless of how they are initially defined.
+    // extend({ MyShaderMaterial: MyShaderMaterial })
+
+
+
 
     useFrame((state, delta) => {
 
@@ -43,6 +76,10 @@ const Experience = () => {
 
     return (<>
         <OrbitControls makeDefault enableDamping />
+        <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
+            <GizmoViewport axisColors={['#9d4b4b', '#2f7f4f', '#3b5b9d']} labelColor="white" />
+        </GizmoHelper>f
+
         {/* Sets background */}
         {/* <color args={['#1d1f2a']} attach='background' /> */}
         <Environment
@@ -59,7 +96,7 @@ const Experience = () => {
             intensity={2}
             position={[6.25, 3, 4]}
             castShadow
-            shadow-mapSize={[1024, 1024]}
+            shadow-mapSize={[2048, 2048]}
             shadow-camera-near={0.1}
             shadow-camera-far={30}
             shadow-camera-top={8}
@@ -67,6 +104,30 @@ const Experience = () => {
             shadow-camera-bottom={-8}
             shadow-camera-left={-8}
         />
+
+        <Board />
+
+        {/* forwarding leva controls as refs to child -> shader */}
+        <Terrain
+            uPositionFrequency={uPositionFrequency}
+            uStrength={uStrength}
+            uWarpFrequency={uWarpFrequency}
+            uWarpStrength={uWarpStrength}
+            colorWaterDeep={colorWaterDeep}
+            colorWaterSurface={colorWaterSurface}
+            colorSand={colorSand}
+            colorGrass={colorGrass}
+            colorSnow={colorSnow}
+            colorRock={colorRock}
+        />
+
+
+
+
+
+
+
+
 
 
         {/* place holder for mesh with shader material */}
@@ -79,14 +140,37 @@ const Experience = () => {
             {/* <myShaderMaterial transparent side={THREE.DoubleSide} /> */}
         </mesh>
 
-        <mesh
+        {/* <mesh
             position={[0, 0, 0]}
         >
             <icosahedronGeometry args={[2, 5]} />
             <meshPhysicalMaterial />
-            {/* <meshStandardMaterial color={'red'} /> */}
 
-        </mesh>
+
+        </mesh> */}
+
+        {/* <mesh>
+            <meshStandardMaterial />
+            <Geometry>
+                <Base scale={[6, 0.5, 0.5]}>
+                    <boxGeometry />
+                </Base>
+                <Addition scale={[0.5, 2, 0.5]}>
+                    <boxGeometry />
+                </Addition>
+                <Subtraction scale={[0.5, 0.2, 0.5]}>
+                    <sphereGeometry />
+                </Subtraction>
+            </Geometry>
+        </mesh> */}
+
+
+
+
+        {/* <mesh >
+            <planeGeometry args={[5, 5]} />
+            <meshPhysicalMaterial side={THREE.DoubleSide} />
+        </mesh> */}
 
     </>
     )
